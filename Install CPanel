@@ -1,0 +1,37 @@
+---
+- name: Install Cpanel
+  hosts: CPanel
+  remote_user: root
+
+  tasks:
+  - name: Ensure SELinux is set to enforcing mode
+    ansible.builtin.lineinfile:
+     path: /etc/selinux/config
+     regexp: '^SELINUX='
+     line: SELINUX=disabled
+     
+  - name: Upgrade all packages
+    yum:
+     name: '*'
+     state: latest
+     
+  - name: Stop service Network Manager on Centos, if running
+    ansible.builtin.systemd:
+     name: NetworkManager
+     enabled: no
+     state: stopped
+     
+  - name: download Cpanel to home dir
+    get_url:
+     url: http://httpupdate.cpanel.net/latest
+     dest: /home/
+     mode: 0777
+     
+  - name: Run the install Cpanel
+    shell: /home/latest
+     
+  - name: Start service Network Manager
+    ansible.builtin.systemd:
+     name: NetworkManager
+     enabled: yes
+     state: started
